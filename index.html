@@ -1697,22 +1697,15 @@ async function S(key, value) {
                     else if (key === 'g') row = [value[i].id || '', value[i].title || '', value[i].color || '', JSON.stringify(value[i].items || [])];
                     allRows.push(row);
                 }
-                // Chia nhỏ thành từng đợt 20 dòng để tránh lỗi URL quá dài
-var batchSize = 20;
-var totalSent = 0;
-for (var i = 0; i < allRows.length; i += batchSize) {
-    var batch = allRows.slice(i, Math.min(i + batchSize, allRows.length));
-    var url = GOOGLE_SHEETS_API + '?action=writeAll&sheet=' + encodeURIComponent(sheetName) + 
-              '&data=' + encodeURIComponent(JSON.stringify(batch));
-    try {
-        var response = await fetch(url);
-        var result = await response.json();
-        totalSent += (result.count || batch.length);
-    } catch (err) {
-        console.error('Lỗi đợt ' + (i/batchSize + 1) + ':', err);
-    }
-}
-console.log('✅ Đồng bộ ' + sheetName + ': ' + totalSent + '/' + allRows.length + ' dòng');
+                
+                // DÙNG POST - KHÔNG GIỚI HẠN ĐỘ DÀI
+                var url = GOOGLE_SHEETS_API + '?action=writeAll&sheet=' + encodeURIComponent(sheetName);
+                var response = await fetch(url, {
+                    method: 'POST',
+                    body: JSON.stringify(allRows)
+                });
+                var result = await response.json();
+                console.log('✅ Đồng bộ ' + sheetName + ': ' + (result.count || allRows.length) + ' dòng');
             }
         } catch (e) {
             console.error('Lỗi save:', e);
