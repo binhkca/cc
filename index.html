@@ -1483,7 +1483,7 @@
 
 <script>
   // ==================== GOOGLE SHEETS CONFIG ====================
-var GOOGLE_SHEETS_API = 'https://script.google.com/macros/s/AKfycbwJXRjkXBtupdeezRbx6Xq563Zw6Wp6m5Azhq8zZ03uJVahqp8Ns3fho2USoQDLjW-SoA/exec'; // ← THAY URL CỦA BẠN
+var GOOGLE_SHEETS_API = 'https://script.google.com/macros/s/AKfycbypfg3wEt8Yg4Y6HA1hLliE4CuhuZoW2bkX-cAhVi9bmkjFeLJFfgeoudNA0lH4yjraDg//exec'; // ← THAY URL CỦA BẠN
 var USE_GOOGLE_SHEETS = true; // true = dùng Google Sheets, false = dùng localStorage
 
 // Hàm đọc dữ liệu từ Google Sheets
@@ -2205,37 +2205,35 @@ window.subAtt = async function(e, keepTimestamp) {
     return new Date(b.timestamp) - new Date(a.timestamp);
   });
   
-  S(REC_KEY, rec); 
-// Lưu lên Google Sheets
-// Lưu records lên Google Sheets - CHỈ LƯU BẢN GHI MỚI
-if (USE_GOOGLE_SHEETS) {
+S(REC_KEY, rec);
+
+// Lưu records lên Sheets - CHỐNG TRÙNG TUYỆT ĐỐI
+if (USE_GOOGLE_SHEETS && selectedEmployees.length > 0) {
     (function() {
-        var sheetName = 'records';
-        // Chỉ lấy bản ghi vừa thêm (bản ghi mới nhất)
+        // Chỉ lấy bản ghi vừa thêm
         var newRecords = [];
-        for (var i = rec.length - selectedEmployees.length; i < rec.length; i++) {
+        var startIdx = rec.length - selectedEmployees.length;
+        for (var i = startIdx; i < rec.length; i++) {
             var r = rec[i];
             newRecords.push([
-                r.id || ('rec_' + Date.now() + '_' + i),
-                r.employee || '',
-                r.date || '',
-                r.shift || '',
-                r.eat || '',
+                r.id,
+                r.employee,
+                r.date,
+                r.shift,
+                r.eat,
                 JSON.stringify(r.tasks || []),
                 r.note || '',
                 r.timestamp || new Date().toISOString()
             ]);
         }
         
-        // Gửi từng bản ghi một qua append (để tránh trùng lặp)
-        newRecords.forEach(function(row, idx) {
-            var iframe = document.createElement('iframe');
-            iframe.style.display = 'none';
-            iframe.src = GOOGLE_SHEETS_API + '?action=append&sheet=' + sheetName + 
-                         '&data=' + encodeURIComponent(JSON.stringify(row));
-            document.body.appendChild(iframe);
-            setTimeout(function() { document.body.removeChild(iframe); }, 3000);
-        });
+        // Gửi 1 lần duy nhất qua iframe
+        var iframe = document.createElement('iframe');
+        iframe.style.display = 'none';
+        iframe.src = GOOGLE_SHEETS_API + '?action=saveRecords&sheet=records&data=' + 
+                     encodeURIComponent(JSON.stringify(newRecords));
+        document.body.appendChild(iframe);
+        setTimeout(function() { document.body.removeChild(iframe); }, 5000);
         
         console.log('✅ Đã gửi ' + newRecords.length + ' bản ghi mới lên Sheets');
     })();
