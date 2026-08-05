@@ -3588,6 +3588,12 @@ if(impB){impB.disabled=true;impB.style.opacity='0.6';}
 // ==================== INIT ====================
 function init(){
   checkAdmin();
+     // 👇 THÊM DÒNG NÀY: Luôn đồng bộ từ Sheets trước khi hiển thị
+    if (USE_GOOGLE_SHEETS && !isAdmin) {
+        syncFromSheets().then(function() {
+            refreshAllUI();
+        });
+    }
     // 👇 HIỂN THỊ NGAY DỮ LIỆU CŨ (0 giây chờ)
     var attDate = document.getElementById('attDate'); 
     if(attDate) attDate.value = new Date().toISOString().split('T')[0];
@@ -4202,6 +4208,13 @@ async function syncFromSheets() {
         console.error('❌ Lỗi tải dữ liệu:', e);
     }
 }   
+  function refreshAllUI() {
+    rShifts(); rGFull(); rGCompact(); rEmp(); rShiftList(); 
+    renderAudit(); renderStatistics();
+    renderMissingEmployees();
+    var empCount = document.getElementById('empCount'); 
+    if(empCount) empCount.textContent = emp.length + ' NV';
+}
 </script>
 </body>
 </html>
