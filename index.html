@@ -2207,12 +2207,15 @@ window.subAtt = async function(e, keepTimestamp) {
   
   S(REC_KEY, rec); 
 // Lưu lên Google Sheets
+// Lưu records lên Google Sheets - CHỈ LƯU BẢN GHI MỚI
 if (USE_GOOGLE_SHEETS) {
     (function() {
-        var startIdx = rec.length - selectedEmployees.length;
-        for (var i = startIdx; i < rec.length; i++) {
+        var sheetName = 'records';
+        // Chỉ lấy bản ghi vừa thêm (bản ghi mới nhất)
+        var newRecords = [];
+        for (var i = rec.length - selectedEmployees.length; i < rec.length; i++) {
             var r = rec[i];
-            var row = [
+            newRecords.push([
                 r.id || ('rec_' + Date.now() + '_' + i),
                 r.employee || '',
                 r.date || '',
@@ -2221,13 +2224,20 @@ if (USE_GOOGLE_SHEETS) {
                 JSON.stringify(r.tasks || []),
                 r.note || '',
                 r.timestamp || new Date().toISOString()
-            ];
-            sheetsAppend('records', row).then(function(res) {
-                console.log('✅ Đã lưu bản ghi lên Sheets:', res);
-            }).catch(function(err) {
-                console.error('❌ Lỗi lưu Sheets:', err);
-            });
+            ]);
         }
+        
+        // Gửi từng bản ghi một qua append (để tránh trùng lặp)
+        newRecords.forEach(function(row, idx) {
+            var iframe = document.createElement('iframe');
+            iframe.style.display = 'none';
+            iframe.src = GOOGLE_SHEETS_API + '?action=append&sheet=' + sheetName + 
+                         '&data=' + encodeURIComponent(JSON.stringify(row));
+            document.body.appendChild(iframe);
+            setTimeout(function() { document.body.removeChild(iframe); }, 3000);
+        });
+        
+        console.log('✅ Đã gửi ' + newRecords.length + ' bản ghi mới lên Sheets');
     })();
 }
   log('Chấm công: ' + selectedEmployees.length + ' NV - ' + formatDate(dt));
