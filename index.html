@@ -4215,7 +4215,12 @@ async function syncFromSheets() {
             });
           // Chuẩn hóa ngày
             recData.forEach(function(row) {
-                if (row.date) row.date = row.date.split('T')[0];
+                if (row.date) {
+                var d = new Date(row.date);
+                row.date = d.getFullYear() + '-' + 
+               String(d.getMonth() + 1).padStart(2, '0') + '-' + 
+               String(d.getDate()).padStart(2, '0');
+}
 });
             localStorage.setItem(REC_KEY, JSON.stringify(recData));
         }
